@@ -76,9 +76,6 @@ generate month = month(yeardate)
 generate schYear = year(yeardate)
 replace schYear = schYear + 1 if month>6
 
-//replace yeardate = date
-//replace year = year(yeardate)
-//drop if year == 2000
 
 merge m:1 ncesdistrictid using "NCEStoCFIPS.dta"
 rename cnty county
@@ -86,42 +83,7 @@ keep if _merge==3
 collapse dumVirtual dumHybrid dumClose dumOpen dumAnyButOpen, by(county schYear)
 sort county
 
-/*drop name
-drop opstfips
-drop street
-drop state
-drop zip
-drop stfip
-drop nmcnty
-drop lat
-drop lon
-drop city
-drop nmcbsa
-drop csa
-drop cbsa
-drop nmcsa
-drop necta
-drop nmnecta
-drop cd
-drop sldl
-drop sldu
-drop schoolyear
-drop locale
-drop pct_city11
-drop pct_city12
-drop pct_city13
-drop pct_sub21
-drop pct_sub22
-drop pct_sub23
-drop pct_town31
-drop pct_town32
-drop pct_town33
-drop pct_rural41
-drop pct_rural42
-drop pct_rural43
-drop cbsatype*/
 
-//drop _merge
 merge 1:m county schYear using "dumEnrollDataNoCollapse.dta"
 sort county schYear
 replace dumVirtual = 0 if dumVirtual ==.
@@ -130,7 +92,6 @@ replace dumClose = 0 if dumClose ==.
 replace dumOpen = 1 if dumOpen ==.
 replace dumAnyButOpen = 0 if dumAnyButOpen ==.
 drop if _merge==1
-//keep if _merge==3
 drop if schYear == 2012
 drop if schYear==2021 & _merge==2
 
@@ -142,17 +103,6 @@ foreach i in `unique_counties'{
 }
 
 
-/*gen int tempCounter = 0
-gen int fullyears = 0
-foreach i of county {
-	replace tempCounter = 0 if county == `i'
-	foreach j of schYear{
-		replace tempCounter = `tempCounter' + 1 if county == `i'
-	}
-}
-replace fullyears = 1 if tempCounter == 11*/
-
- 
 gen int dum2013 = 0
 replace dum2013 = 1 if schYear == 2013
 gen int dum2014 = 0
@@ -201,17 +151,6 @@ forval i= 1/223924 {
 		qui replace lastYearAny = dumAny[`i'] if schYear == 2022 & county == county[`i']
 	}
 }
-//by county: generate lastYearVirtual = dumVirtual[_n-1]
-/*by county: generate lastYearHybrid = dumHybrid[_n-1]
-by county: generate lastYearClose = dumClose[_n-1]
-by county: generate lastYearOpen = dumOpen[_n-1]
-by county: generate lastYearAny = dumAnyButOpen[_n-1]
-replace lastYearVirtual = 0 if lastYearVirtual ==.
-replace lastYearHybrid = 0 if lastYearHybrid ==.
-replace lastYearClose = 0 if lastYearClose ==.
-replace lastYearOpen = 0 if lastYearOpen ==.
-replace lastYearAny = 0 if lastYearAny ==.
-*/
 
 sort county schYear
 xtset county
@@ -229,21 +168,6 @@ replace eventBnA = 1 if schYear >=2021
 
 gen timeFrom2021 = schYear - 2021
 
-/*eventdd dumEnroll dumVirtual i.county, timevar(timeFrom2021) ci(rcap) cluster(county) graph_op(ytitle("College Enrollment") legend(label(1 "Enrollment Diff From Baseline") label(2 "Confidence Interval")) ylabel(-0.1(.02)0.1) xlabel(-8(1)2))
-eventdd dumEnroll dummerVirtual i.county, timevar(timeFrom2021) ci(rcap) cluster(county) graph_op(ytitle("College Enrollment") legend(label(1 "Enrollment Diff From Baseline") label(2 "Confidence Interval")) ylabel(-0.1(.02)0.1) xlabel(-8(1)2))
-eventdd dumEnroll dummerHybrid i.county, timevar(timeFrom2021) ci(rcap) cluster(county) graph_op(ytitle("College Enrollment") legend(label(1 "Enrollment Diff From Baseline") label(2 "Confidence Interval")) ylabel(-0.1(.02)0.1) xlabel(-8(1)2))
-eventdd dumEnroll dummerClose i.county, timevar(timeFrom2021) ci(rcap) cluster(county) graph_op(ytitle("College Enrollment") legend(label(1 "Enrollment Diff From Baseline") label(2 "Confidence Interval")) ylabel(-0.1(.02)0.1) xlabel(-8(1)2))*/
-//eventdd dumEnroll dumHybrid i.county, timevar(timeFrom2021) ci(rcap) cluster(county) graph_op(ytitle("College Enrollment") legend(label(1 "Enrollment Diff From Baseline") label(2 "Confidence Interval")) ylabel(-0.1(.02)0.1) xlabel(-8(1)2))
-//eventdd dumEnroll dumClose i.county, timevar(timeFrom2021) ci(rcap) cluster(county) graph_op(ytitle("College Enrollment") legend(label(1 "Enrollment Diff From Baseline") label(2 "Confidence Interval")) ylabel(-0.1(.02)0.1) xlabel(-8(1)2))
-
-
-
-//eventdd dumEnroll dummerVirtual dummerHybrid dummerClose i.county, timevar(timeFrom2021) ci(rcap) cluster(county) graph_op(ytitle("College Enrollment") legend(label(1 "Enrollment Diff From Baseline") label(2 "Confidence Interval")) ylabel(-0.1(.02)0.1) xlabel(-8(1)2))
-
-//eventdd dumEnroll dumVirtual dumHybrid dumClose i.county, timevar(timeFrom2021) ci(rcap) cluster(county) graph_op(ytitle("College Enrollment") legend(label(1 "Enrollment Diff From Baseline") label(2 "Confidence Interval")) ylabel(-0.1(.02)0.1) xlabel(-8(1)2))
-
-//gen tmp=dumVirtual if year==2021
-//Egen dumVirtual2021=max(tmp), by(county)
 gen yl1virtual=(schYear==2019)*dummerVirtual
 label var yl1virtual "2018-2019"
 gen yl2virtual=(schYear==2018)*dummerVirtual
@@ -335,56 +259,4 @@ coefplot, keep(yl7hybrid yl6hybrid yl5hybrid yl4hybrid yl3hybrid yl2hybrid ylea0
 coefplot, keep(yl7close yl6close yl5close yl4close yl3close yl2close ylea0close ylea1close ylea2close ylea3close) xline(0) name(closed) title("Closed") ytitle("School Years") xtitle("Difference from Baseline, 2018-2019")
 
 graph combine virtual hybrid closed
-
-
-//test lastYearVirtual lastYearHybrid lastYearClose
-
-//xtreg enroll yl8Vvirtual
-
-
-//eventdd dumEnroll dumAnyButOpen i.county, timevar(timeFrom2021) ci(rcap) cluster(county) graph_op(ytitle("College Enrollment") ylabel(-0.01(.001)0.01) xlabel(-8(1)3))
-//eventdd dumEnroll dumAnyButOpen i.schYear, timevar(timeFrom2021) ci(rcap) cluster(county) graph_op(ytitle("College Enrollment") ylabel(-0.01(.001)0.01) xlabel(-8(1)3))
-
-//eventdd dumEnroll dumAnyButOpen i.schYear, timevar(timeFrom2021) method(fe, cluster(county)) graph_op(ytitle("College Enrollment") ylabel(-0.1(0.01)0.1) xlabel(-8(1)3))
-
-/*
-format yeardate %td
-
-by county: gen datenum=_n
-by county: gen target=datenum if yeardate == td(01mar2020)
-egen td=min(target), by(county)
-drop target
-gen dif = datenum-td
-by county: gen event_window = 1 if dif>=-2 & dif<=2
-egen count_event_obs = count(event_window), by(county)
-by county: gen estimation_window=1 if dif<-2 | dif>2
-egen count_est_obs=count(estimation_window), by(county)
-replace event_window=0 if event_window==.
-replace estimation_window=0 if estimation_window==.
-
-tab county if count_event_obs<5
-tab county if count_est_obs<30
-
-drop if count_event_obs < 5
-drop if count_est_obs < 30
-
-gen predictedEnroll=. 
-egen id=group(county)
-foreach i in id{
-reg dumEnroll dummy_learning if id== `i' & estimation_window==1 
-predict p if id==`i' 
-replace predictedEnroll = p if id==`i' & event_window==1
-drop p
-} 
- 
-sort id yeardate
-gen abnormalEnroll=dumEnroll-predictedEnroll if event_window==1
-by id: egen cumulative_abnormalEnroll = total(abnormalEnroll)
-
-sort id yeardate
-by id: egen ar_sd = sd(abnormalEnroll)
-gen test =(1/sqrt(5)) *(cumulative_abnormalEnroll /ar_sd)
-list county cumulative_abnormalEnroll test if dif==0 
-
-twoway (sc dumEnroll dummy_learning, mcolor(navy) lcolor(navy) connect(direct)) (sc predictedEnroll dummy_learning, mcolor(maroon) lcolor(maroon) connect(direct)), legend(lab(1 "Foreign") lab(2 "Foreign CI") lab(3 "Domestic") lab(4 "Domestic CI")) xlab(,val)
 
